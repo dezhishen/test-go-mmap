@@ -4,10 +4,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 
 	"github.com/dezhishen/test-go-mmap/shared"
 	"github.com/edsrzf/mmap-go"
@@ -28,12 +28,18 @@ func runPlugin() {
 		Output: os.Stdout,
 		Level:  hclog.Debug,
 	})
-
+	currentOS := runtime.GOOS
+	var pluginSuffix string
+	if currentOS == "windows" {
+		pluginSuffix = ".exe"
+	} else {
+		pluginSuffix = ""
+	}
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: shared.Handshake,
 		Plugins:         shared.PluginMap,
-		Cmd:             exec.Command("./plugin/mmap_operator.exe"),
+		Cmd:             exec.Command("./plugin/mmap_operator" + pluginSuffix),
 		Logger:          logger,
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolNetRPC},
@@ -76,5 +82,5 @@ func runPlugin() {
 		panic(err)
 	}
 	defer contnet.Unmap()
-	fmt.Println(string(contnet))
+	log.Println(string(contnet))
 }
