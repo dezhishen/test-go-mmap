@@ -60,27 +60,32 @@ func runPlugin() {
 	log.Println("成功获取插件对象")
 	// 创建文件
 	filename := "test.data"
+	contents := []string{"test1", "test2"}
 	defer os.Remove(filename)
-	log.Println("开始通过插件写入")
-	err = operator.Write(filename, []byte("test"))
-	if err != nil {
-		log.Panic(err)
-	}
-	log.Println("插件中读取")
-	err = operator.Read(filename)
-	if err != nil {
-		log.Panic(err)
-	}
-	log.Println("宿主程序读取")
 	// 主程序读取内容
-	f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		log.Panic(err)
 	}
-	contnet, err := mmap.Map(f, mmap.RDONLY, 0)
+	m, err := mmap.Map(f, mmap.RDWR, 0)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	defer contnet.Unmap()
-	log.Println(string(contnet))
+	defer m.Unmap()
+	// z
+	for index, content := range contents {
+		log.Printf("第%d次操作", index)
+		log.Println("开始通过插件写入")
+		err = operator.Write(filename, []byte(content))
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Println("宿主程序读取")
+		log.Println(string(m))
+		log.Println("插件中读取")
+		err = operator.Read(filename)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
 }
